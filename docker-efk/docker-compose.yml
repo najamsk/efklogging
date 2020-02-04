@@ -16,10 +16,15 @@ services:
   # sysctl -w vm.max_map_count=262144
   # Add this to /etc/sysctl.conf for making it permanent
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
     container_name: elasticsearch
     environment:
+      - cluster.name=docker-cluster
       - bootstrap.memory_lock=true
+      - network.bind_host=0.0.0.0
+      - network.host=0.0.0.0
+      - discovery.type=single-node
+      # - "discovery.zen.ping.unicast.hosts=elasticsearch"
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
       memlock:
@@ -29,17 +34,24 @@ services:
       - esdata1:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
+    networks:
+      - esnet
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.5.4
+    image: docker.elastic.co/kibana/kibana:7.5.2
     container_name: kibana
     environment:
-      ELASTICSEARCH_URL: "http://elasticsearch:9200"
+      ELASTICSEARCH_URL: "http://localhost:9200"
     ports:
       - 5601:5601
     depends_on:
       - elasticsearch
+    networks:
+      - esnet
 
 volumes:
   esdata1:
     driver: local
+
+networks:
+  esnet:
